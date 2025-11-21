@@ -10,11 +10,15 @@ app:
 
 # Default LLM Configuration
 llm:
-  provider: "ollama/qwen2.5:4b"
+  provider: "ollama/qwen3:14b"
   # api_key: sk-...  # If you pass the API key directly (not recommended)
 
 # Redis Configuration
+# URI can be overridden by REDIS_URI environment variable
+# If not set, will be constructed from REDIS_HOST and REDIS_PORT environment variables
+# Format: redis://[password@]host:port[/db]
 redis:
+  uri: "redis://localhost:6379/0"  # Default, overridden by REDIS_URI env var if set
   host: "localhost"
   port: 6379
   db: 0
@@ -34,7 +38,7 @@ rate_limiting:
   enabled: True
   default_limit: "1000/minute"
   trusted_proxies: []
-  storage_uri: "memory://"  # Use "redis://localhost:6379" for production
+  storage_uri: "memory://"  # Use "redis://redis:6379" for production with external Redis
 
 # Security Configuration
 security:

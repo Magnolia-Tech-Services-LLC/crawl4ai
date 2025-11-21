@@ -200,7 +200,9 @@ async def root():
     return RedirectResponse("/playground")
 
 # ─────────────────── infra / middleware  ─────────────────────
-redis = aioredis.from_url(config["redis"].get("uri", "redis://localhost"))
+# Redis connection: prefer REDIS_URI env var, then config, then default
+redis_uri = os.environ.get("REDIS_URI") or config["redis"].get("uri", "redis://localhost")
+redis = aioredis.from_url(redis_uri)
 
 limiter = Limiter(
     key_func=get_remote_address,
