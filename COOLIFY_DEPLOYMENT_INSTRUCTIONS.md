@@ -2,95 +2,87 @@
 
 ## Prerequisites
 
-1. **Redis Service**: Deploy Redis as a separate service in Coolify (see Step 1 below)
-2. **Ollama Service**: Already running in Coolify with Qwen3 14B model
-3. **Git Repository**: `https://github.com/Magnolia-Tech-Services-LLC/crawl4ai.git` (fork is ready)
+1. **Ollama Service**: Already running in Coolify with Qwen3 14B model
+2. **Git Repository**: `https://github.com/Magnolia-Tech-Services-LLC/crawl4ai.git` (fork is ready)
+3. **Docker Compose**: The repository includes `docker-compose.yml` with Redis service included
 
-## Step 1: Deploy Redis Service
-
-1. In Coolify dashboard, navigate to your project
-2. Click **"+ New Resource"** → **"Database"** → **"Redis"**
-3. Configure Redis:
-   - **Name**: `crawl4ai-redis` (or your preferred name)
-   - **Version**: Latest stable
-   - **Port**: `6379` (default)
-   - **Volume**: Add persistent volume at `/data` for data persistence
-4. **Deploy** the Redis service
-5. **Note the service name** - you'll need it for environment variables (e.g., `crawl4ai-redis`)
-
-## Step 2: Create Crawl4AI Application
+## Step 1: Create Crawl4AI Application with Docker Compose
 
 1. In your Coolify project, click **"+ New Resource"** → **"Application"**
 2. **Source**: Select **"GitHub"**
 3. **Repository**: `Magnolia-Tech-Services-LLC/crawl4ai`
 4. **Branch**: `main`
-5. **Build Pack**: `Dockerfile` (auto-detected)
-6. **Destination Server**: `localhost` (wgc8cg4w08kks4s8o8scscso)
-7. **Environment**: `production`
+5. **Build Pack**: Select **"Docker Compose"** (not Dockerfile)
+6. **Docker Compose Location**: `/docker-compose.yml` (root of repository)
+7. **Base Directory**: `/` (root)
+8. **Destination Server**: `localhost` (wgc8cg4w08kks4s8o8scscso)
+9. **Environment**: `production`
 
-## Step 3: Configure Application Settings
-
-### Ports
-- **Exposed Port**: `11235`
-- **Port Mapping**: `11235:11235`
-
-### Environment Variables
+## Step 2: Configure Environment Variables
 
 Add the following environment variables in the application settings:
 
 ```
 LLM_PROVIDER=ollama/qwen3:14b
 OLLAMA_BASE_URL=http://ollama:11434
-REDIS_URI=redis://crawl4ai-redis:6379/0
 PYTHON_ENV=production
 ```
 
 **Important Notes:**
-- Replace `crawl4ai-redis` with your actual Redis service name from Step 1
+- `REDIS_URI` is automatically set to `redis://redis:6379/0` by docker-compose.yml
 - Replace `ollama` with your actual Ollama service name if different
-- If Redis has a password, use: `redis://:password@crawl4ai-redis:6379/0`
+- The Redis service is included in the docker-compose.yml and will be deployed automatically
 
-### Volume Mappings
+### Docker Compose Configuration
 
-Add the following volume mapping:
+The `docker-compose.yml` file includes:
+- **crawl4ai service**: Main application on port 11235
+- **redis service**: Redis 7 Alpine with persistent volume at `/data`
+- **Network**: Both services on `crawl4ai-network`
+- **Volume**: `redis_data` for Redis persistence
 
-| Host Path | Container Path | Description |
-|-----------|----------------|-------------|
-| `/dev/shm` | `/dev/shm` | Shared memory for Chromium performance |
+The compose file automatically:
+- Sets `REDIS_URI=redis://redis:6379/0` for the crawl4ai service
+- Configures Redis with AOF persistence (`--appendonly yes`)
+- Sets up health checks for both services
+- Configures service dependencies (crawl4ai waits for Redis to be healthy)
 
-### Resource Limits (Recommended)
+### Volume Mappings (if needed)
 
-- **Memory Limit**: `4096` MB (4GB)
-- **Memory Reservation**: `1024` MB (1GB)
-- **CPU Limit**: Leave default or set as needed
+The docker-compose.yml already includes:
+- `/dev/shm:/dev/shm` for Chromium performance (in base config)
+- `redis_data:/data` for Redis persistence (managed by compose)
 
-### Health Check Configuration
+If you need additional volumes, add them in Coolify's volume settings.
 
-- **Health Check**: Enabled
-- **Health Check Path**: `/health`
-- **Health Check Port**: `11235`
-- **Health Check Interval**: `30` seconds
-- **Health Check Timeout**: `10` seconds
-- **Health Check Retries**: `3`
-- **Health Check Start Period**: `40` seconds
+### Resource Limits
 
-**Note**: The healthcheck in the Dockerfile checks for Redis, but since Redis is external, you may need to adjust this. The application health endpoint at `/health` should work regardless.
+Resource limits are defined in docker-compose.yml:
+- **Memory Limit**: `4096` MB (4GB) for crawl4ai
+- **Memory Reservation**: `1024` MB (1GB) for crawl4ai
+- Redis uses default limits (adjust if needed in compose file)
 
 ### Additional Settings
 
 - **Restart Policy**: `unless-stopped`
 - **Base Directory**: `/` (default)
 
-## Step 4: Deploy and Verify
+## Step 3: Deploy and Verify
 
 1. Click **"Save"** or **"Deploy"** to start the build
-2. Monitor the build logs for any issues
-3. Once deployed, verify:
+2. Coolify will:
+   - Build the crawl4ai image from Dockerfile
+   - Pull the Redis image
+   - Create the network and volumes
+   - Start both services
+3. Monitor the build logs for any issues
+4. Once deployed, verify:
+   - Both `crawl4ai` and `redis` services are running
    - Health endpoint: `http://your-domain:11235/health`
-   - Application logs show successful Redis connection
-   - Application logs show no errors
+   - Application logs show successful Redis connection to `redis:6379`
+   - Redis logs show it's running and healthy
 
-## Step 5: Verify Ollama Integration
+## Step 4: Verify Ollama Integration
 
 1. Ensure Ollama service is running
 2. Verify Qwen3 14B model is available:
@@ -104,7 +96,7 @@ Add the following volume mapping:
    ollama pull qwen3:14b
    ```
 
-## Step 6: Test the Application
+## Step 5: Test the Application
 
 1. Test health endpoint:
    ```bash
@@ -119,9 +111,11 @@ Add the following volume mapping:
 ## Troubleshooting
 
 ### Redis Connection Issues
-- Verify Redis service name matches the `REDIS_URI` environment variable
-- Check that both services are in the same Docker network
-- Verify Redis is accessible: `redis-cli -h crawl4ai-redis ping`
+- Verify both `crawl4ai` and `redis` services are running in Coolify
+- Check that both services are in the same Docker network (`crawl4ai-network`)
+- Verify Redis is accessible from crawl4ai container: `docker exec <crawl4ai-container> redis-cli -h redis ping`
+- Check Redis logs in Coolify for any errors
+- Verify `REDIS_URI` environment variable is set correctly (should be `redis://redis:6379/0` from compose)
 
 ### Ollama Connection Issues
 - Verify Ollama service name in `OLLAMA_BASE_URL`
@@ -140,7 +134,10 @@ Coolify automatically creates a Docker network for your project. Both the Crawl4
 ## Notes
 
 - The application uses Traefik (Coolify's default proxy), not Caddy
-- Redis runs as a separate service, not inside the Crawl4AI container
-- The Dockerfile includes Redis server installation for standalone deployments, but it's not used when Redis is external
+- Redis runs as a separate service defined in docker-compose.yml
+- The Dockerfile includes Redis server installation for standalone deployments, but supervisord skips starting it when `REDIS_URI` is set
 - Environment variables take precedence over config.yml settings
+- Docker Compose automatically manages the network, volumes, and service dependencies
+- Redis data persists in the `redis_data` volume across container restarts
+- For standalone deployments (without docker-compose), Redis runs inside the container via supervisord
 
