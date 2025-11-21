@@ -34,11 +34,13 @@ redis:
   ssl_keyfile: None
 
 # Rate Limiting Configuration
+# storage_uri: Automatically uses REDIS_URI if set (for docker-compose), otherwise uses memory://
+# Can be overridden with RATE_LIMITING_STORAGE_URI environment variable
 rate_limiting:
   enabled: True
   default_limit: "1000/minute"
   trusted_proxies: []
-  storage_uri: "memory://"  # Use "redis://redis:6379" for production with external Redis
+  storage_uri: "memory://"  # Default for standalone, auto-upgraded to Redis if REDIS_URI is set
 
 # Security Configuration
 security:

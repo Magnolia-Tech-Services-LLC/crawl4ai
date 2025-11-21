@@ -204,10 +204,16 @@ async def root():
 redis_uri = os.environ.get("REDIS_URI") or config["redis"].get("uri", "redis://localhost")
 redis = aioredis.from_url(redis_uri)
 
+# Rate limiting storage: use Redis if available, otherwise use config
+# For docker-compose deployments, REDIS_URI will be set, so use Redis for rate limiting
+rate_limit_storage = os.environ.get("RATE_LIMITING_STORAGE_URI") or (
+    redis_uri if redis_uri.startswith("redis://") else config["rate_limiting"]["storage_uri"]
+)
+
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=[config["rate_limiting"]["default_limit"]],
-    storage_uri=config["rate_limiting"]["storage_uri"],
+    storage_uri=rate_limit_storage,
 )
 
 
