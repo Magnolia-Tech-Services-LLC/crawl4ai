@@ -34,6 +34,24 @@ x-base-config: &base-config
   user: "appuser"
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: crawl4ai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - crawl4ai-network
+
   crawl4ai:
     # 1. Default: Pull multi-platform test image from Docker Hub
     # 2. Override with local image via: IMAGE=local-test docker compose up
@@ -49,3 +67,20 @@ services:
     
     # Inherit shared config
     <<: *base-config
+    
+    # Use external Redis service
+    environment:
+      - REDIS_URI=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - crawl4ai-network
+
+networks:
+  crawl4ai-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local

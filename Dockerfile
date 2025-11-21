@@ -186,7 +186,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
         echo "⚠️ Warning: Less than 2GB RAM available! Your container might need a memory boost! 🚀"; \
         exit 1; \
     fi && \
-    redis-cli ping > /dev/null && \
+    if [ -z "$REDIS_URI" ]; then \
+        redis-cli ping > /dev/null || exit 1; \
+    fi && \
     curl -f http://localhost:11235/health || exit 1'
 
 EXPOSE 6379
