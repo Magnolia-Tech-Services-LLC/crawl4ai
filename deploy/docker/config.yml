@@ -10,7 +10,7 @@ app:
 
 # Default LLM Configuration
 llm:
-  provider: "openai/gpt-4o-mini"
+  provider: "ollama/qwen2.5:4b"
   # api_key: sk-...  # If you pass the API key directly (not recommended)
 
 # Redis Configuration
