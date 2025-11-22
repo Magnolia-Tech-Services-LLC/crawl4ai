@@ -168,11 +168,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GPU runtime dependencies if enabled
+# Note: nvidia-cuda-toolkit requires NVIDIA's repository, so we skip it here
+# GPU support should be handled via nvidia-docker runtime, not package installation
 RUN if [ "$ENABLE_GPU" = "true" ] && [ "$TARGETARCH" = "amd64" ] ; then \
-        apt-get update && apt-get install -y --no-install-recommends \
-        nvidia-cuda-toolkit \
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/* ; \
+        echo "⚠️  GPU support enabled - ensure nvidia-docker runtime is configured"; \
     fi
 
 # Create non-root user
