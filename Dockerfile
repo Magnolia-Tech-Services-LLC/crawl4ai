@@ -209,7 +209,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     fi && \
     curl -f http://localhost:11235/health || exit 1'
 
-EXPOSE 6379
+# Expose application port (Redis is a separate service in docker-compose deployments)
+EXPOSE 11235
 
 # Switch to non-root user
 USER appuser
