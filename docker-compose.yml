@@ -65,10 +65,13 @@ services:
         condition: service_healthy
     networks:
       - crawl4ai-network
+      - coolify  # Connect to Coolify network to access Ollama service
 
 networks:
   crawl4ai-network:
     driver: bridge
+  coolify:
+    external: true  # Use existing Coolify network for Ollama access
 
 volumes:
   redis_data:
