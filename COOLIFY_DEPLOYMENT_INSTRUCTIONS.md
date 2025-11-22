@@ -20,12 +20,43 @@
 
 ## Step 2: Configure Environment Variables
 
-Add the following environment variables in the application settings:
+### Required Environment Variables
+
+Add the following **required** environment variables in the application settings:
 
 ```
 LLM_PROVIDER=ollama/qwen3:14b
+```
+
+### Optional Environment Variables
+
+Add these if needed:
+
+```
 OLLAMA_BASE_URL=http://ollama:11434
-PYTHON_ENV=production
+```
+
+**When to set OLLAMA_BASE_URL:**
+- Only needed if Ollama is on a different host/network than the default
+- If Ollama service name in Coolify is different from `ollama`
+- If Ollama uses a non-standard port
+- If Ollama is accessible via a different URL
+
+**If not set:** LiteLLM will use the default Ollama endpoint (`http://localhost:11434`), which works if Ollama is in the same container or accessible via service name.
+
+### Automatically Configured (No Action Needed)
+
+These are set automatically by docker-compose.yml:
+- `REDIS_URI=redis://redis:6379/0` - Redis connection
+- `PYTHON_ENV=production` - Already set in Dockerfile
+
+### Additional Optional Variables
+
+You can optionally set these for advanced configuration:
+
+```
+LLM_TEMPERATURE=0.7                    # Global LLM temperature (0.0-2.0)
+RATE_LIMITING_STORAGE_URI=redis://... # Override rate limiting storage (defaults to Redis if REDIS_URI set)
 ```
 
 **Important Notes:**
