@@ -37,8 +37,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: crawl4ai-redis
-    ports:
-      - "6379:6379"
+    # No port mapping needed - Redis is only accessed internally via Docker network
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
