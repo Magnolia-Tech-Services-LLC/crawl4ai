@@ -33,16 +33,18 @@ LLM_PROVIDER=ollama/qwen3:14b
 Add these if needed:
 
 ```
-OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_API_BASE=http://ollama:11434
 ```
 
-**When to set OLLAMA_BASE_URL:**
+**When to set OLLAMA_API_BASE:**
 - Only needed if Ollama is on a different host/network than the default
 - If Ollama service name in Coolify is different from `ollama`
 - If Ollama uses a non-standard port
 - If Ollama is accessible via a different URL
 
 **If not set:** LiteLLM will use the default Ollama endpoint (`http://localhost:11434`), which works if Ollama is in the same container or accessible via service name.
+
+**Important:** According to official LiteLLM documentation, the environment variable must be `OLLAMA_API_BASE` (not `OLLAMA_BASE_URL`). LiteLLM automatically checks this environment variable when using Ollama providers.
 
 ### Automatically Configured (No Action Needed)
 
