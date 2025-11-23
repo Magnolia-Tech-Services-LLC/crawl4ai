@@ -156,20 +156,26 @@ Resource limits are defined in docker-compose.yml:
 - Verify Ollama is running: `curl http://ollama:11434/api/tags`
 
 ### Gateway Timeout (504) Issues
-- **Root Cause**: Traefik (Coolify's reverse proxy) has a default timeout (usually 60 seconds) that's shorter than LLM processing time for large models
-- **Solution 1**: Increase Traefik timeout in Coolify:
+- **Root Cause Confirmed**: Traefik (Coolify's reverse proxy) has a default timeout (usually 60 seconds) that's shorter than LLM processing time for large models. Testing shows qwen3:14b takes 56+ seconds to respond, which exceeds Traefik's default timeout.
+- **Solution 1**: Increase Traefik timeout in Coolify (Recommended):
   1. Go to your application settings in Coolify
-  2. Look for "Traefik Labels" or "Advanced Settings"
-  3. Add label: `traefik.http.services.crawl4ai.loadbalancer.server.healthcheck.timeout=300s`
-  4. Or add to docker-compose.yml under labels:
+  2. Navigate to "Advanced" or "Docker Compose" settings
+  3. Add Traefik labels to your docker-compose.yml under the `crawl4ai` service:
      ```yaml
      labels:
+       - "traefik.http.services.crawl4ai.loadbalancer.server.healthcheck.timeout=300s"
        - "traefik.http.middlewares.crawl4ai-timeout.forwardauth.address=http://localhost:11235"
-       - "traefik.http.services.crawl4ai.loadbalancer.healthcheck.timeout=300s"
+       - "traefik.http.routers.crawl4ai.middlewares=crawl4ai-timeout"
      ```
+  4. Or configure in Coolify UI if it supports custom Traefik labels
 - **Solution 2**: Use a smaller/faster model (e.g., `ollama/qwen3:4b` instead of `qwen3:14b`)
+  - Smaller models respond faster and are less likely to hit timeout limits
 - **Solution 3**: Consider using streaming responses for long-running requests
-- **Note**: Large models like qwen3:14b (14.8B parameters) can take 60-120+ seconds to respond on CPU
+- **Note**: 
+  - Large models like qwen3:14b (14.8B parameters) can take 60-120+ seconds to respond on CPU
+  - The application itself works fine (tested: 56 seconds response time inside container)
+  - The timeout occurs at the Traefik proxy level, not in the application
+  - Gunicorn timeout is set to 1800 seconds (30 minutes), which is sufficient
 
 ### Health Check Failures
 - The Dockerfile healthcheck includes a Redis check that may fail with external Redis
