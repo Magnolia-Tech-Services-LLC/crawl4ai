@@ -151,9 +151,25 @@ Resource limits are defined in docker-compose.yml:
 - Verify `REDIS_URI` environment variable is set correctly (should be `redis://redis:6379/0` from compose)
 
 ### Ollama Connection Issues
-- Verify Ollama service name in `OLLAMA_BASE_URL`
+- Verify Ollama service name in `OLLAMA_API_BASE`
 - Check network connectivity between containers
 - Verify Ollama is running: `curl http://ollama:11434/api/tags`
+
+### Gateway Timeout (504) Issues
+- **Root Cause**: Traefik (Coolify's reverse proxy) has a default timeout (usually 60 seconds) that's shorter than LLM processing time for large models
+- **Solution 1**: Increase Traefik timeout in Coolify:
+  1. Go to your application settings in Coolify
+  2. Look for "Traefik Labels" or "Advanced Settings"
+  3. Add label: `traefik.http.services.crawl4ai.loadbalancer.server.healthcheck.timeout=300s`
+  4. Or add to docker-compose.yml under labels:
+     ```yaml
+     labels:
+       - "traefik.http.middlewares.crawl4ai-timeout.forwardauth.address=http://localhost:11235"
+       - "traefik.http.services.crawl4ai.loadbalancer.healthcheck.timeout=300s"
+     ```
+- **Solution 2**: Use a smaller/faster model (e.g., `ollama/qwen3:4b` instead of `qwen3:14b`)
+- **Solution 3**: Consider using streaming responses for long-running requests
+- **Note**: Large models like qwen3:14b (14.8B parameters) can take 60-120+ seconds to respond on CPU
 
 ### Health Check Failures
 - The Dockerfile healthcheck includes a Redis check that may fail with external Redis
