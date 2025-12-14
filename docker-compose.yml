@@ -2,8 +2,8 @@ version: '3.8'
 
 # Shared configuration for all environments
 x-base-config: &base-config
-  # Note: ports removed - Coolify manages port mapping automatically
-  # Port 11235 is configured in Coolify UI (ports_exposes setting)
+  # Port 11235 is exposed to host for network access (see ports mapping in crawl4ai service)
+  # Do NOT configure a public domain in Coolify UI - keep this app internal-only
   # Note: env_file removed - Coolify manages environment variables directly
   # Set LLM_PROVIDER and other env vars in Coolify UI instead of using .llm.env
   volumes:
@@ -42,20 +42,27 @@ services:
       - crawl4ai-network
 
   crawl4ai:
-    # 1. Default: Pull multi-platform test image from Docker Hub
-    # 2. Override with local image via: IMAGE=local-test docker compose up
+    # OPTION 1: Use pre-built image from Docker Hub (FASTEST - Recommended for production)
+    # This pulls the image instead of building, reducing deployment time from 6-7 min to 30-60 sec
+    # To use: Set IMAGE environment variable or use default (unclecode/crawl4ai:latest)
     image: ${IMAGE:-unclecode/crawl4ai:${TAG:-latest}}
     
-    # Local build config (used with --build)
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        INSTALL_TYPE: ${INSTALL_TYPE:-default}
-        ENABLE_GPU: ${ENABLE_GPU:-false}
+    # OPTION 2: Build from source (slower, but allows customization)
+    # To use: Uncomment the build section below and comment out or remove the image line above
+    # Note: If both image and build are specified, Docker Compose will build and tag with the image name
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     INSTALL_TYPE: ${INSTALL_TYPE:-default}
+    #     ENABLE_GPU: ${ENABLE_GPU:-false}
     
     # Inherit shared config
     <<: *base-config
+    
+    # Expose port to host for network access (without public domain)
+    ports:
+      - "11235:11235"
     
     # Use external Redis service
     environment:
@@ -65,7 +72,12 @@ services:
         condition: service_healthy
     networks:
       - crawl4ai-network
-      - coolify  # Connect to Coolify network to access Ollama service
+      - coolify  # Connect to Coolify network for internal access by other Coolify apps
+    
+    # No Traefik labels - app is internal-only, accessible via host port or Docker network
+    # Access from other machines: http://<server-ip>:11235
+    # Other Coolify apps can access this service using: http://crawl4ai:11235
+    # Ensure no public domain is configured in Coolify UI for this application
 
 networks:
   crawl4ai-network:
