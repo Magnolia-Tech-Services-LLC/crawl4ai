@@ -64,9 +64,10 @@ services:
     ports:
       - "11235:11235"
     
-    # Use external Redis service
+    # Use external Redis service - explicit container name to avoid DNS collision
+    # on the shared 'coolify' network where multiple Redis containers exist
     environment:
-      - REDIS_URI=redis://redis:6379/0
+      - REDIS_URI=redis://crawl4ai-redis:6379/0
     depends_on:
       redis:
         condition: service_healthy
