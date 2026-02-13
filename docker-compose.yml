@@ -46,7 +46,7 @@ services:
     # This pulls the image instead of building, reducing deployment time from 6-7 min to 30-60 sec
     # To use: Set IMAGE environment variable or use default (unclecode/crawl4ai:latest)
     image: ${IMAGE:-unclecode/crawl4ai:${TAG:-latest}}
-    
+
     # OPTION 2: Build from source (slower, but allows customization)
     # To use: Uncomment the build section below and comment out or remove the image line above
     # Note: If both image and build are specified, Docker Compose will build and tag with the image name
@@ -56,9 +56,14 @@ services:
     #   args:
     #     INSTALL_TYPE: ${INSTALL_TYPE:-default}
     #     ENABLE_GPU: ${ENABLE_GPU:-false}
-    
+
     # Inherit shared config
     <<: *base-config
+
+    # Mount custom config file to enable stealth mode and other customizations
+    volumes:
+      - /dev/shm:/dev/shm  # Chromium performance (from base-config)
+      - ./deploy/docker/config.yml:/app/config.yml:ro  # Custom config with stealth mode
     
     # Expose port to host for network access (without public domain)
     ports:
