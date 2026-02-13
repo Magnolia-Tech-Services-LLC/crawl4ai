@@ -71,7 +71,8 @@ crawler:
   browser:
     kwargs:
       headless: true
-      text_mode: true
+      text_mode: false
+      enable_stealth: true  # Enable stealth mode by default for better bot evasion
     extra_args:
       # - "--single-process"
       - "--no-sandbox"
