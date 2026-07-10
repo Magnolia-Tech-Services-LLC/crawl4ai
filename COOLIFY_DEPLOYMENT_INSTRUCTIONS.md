@@ -90,6 +90,11 @@ If you need additional volumes, add them in Coolify's volume settings.
 
 ### Resource Limits
 
+Image pin: `unclecode/crawl4ai:0.9.1` (TAG=0.9.1). Magnolia mounts
+`deploy/docker/config.yml` + `crawler_pool.py` (UndetectedAdapter).
+Required env: `CRAWL4AI_API_TOKEN` (non-loopback bind). Optional:
+`CRAWL4AI_USE_UNDETECTED=1` (also set in config.yml).
+
 Resource limits are defined in docker-compose.yml:
 - **Memory Limit**: `16384` MB (16GB) for crawl4ai
 - **Memory Reservation**: `1024` MB (1GB) for crawl4ai
