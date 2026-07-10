@@ -91,7 +91,7 @@ If you need additional volumes, add them in Coolify's volume settings.
 ### Resource Limits
 
 Resource limits are defined in docker-compose.yml:
-- **Memory Limit**: `4096` MB (4GB) for crawl4ai
+- **Memory Limit**: `16384` MB (16GB) for crawl4ai
 - **Memory Reservation**: `1024` MB (1GB) for crawl4ai
 - Redis uses default limits (adjust if needed in compose file)
 
