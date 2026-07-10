@@ -20,20 +20,32 @@ _USE_UNDETECTED = bool(
 
 
 async def _create_started_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
-    """Create and start a crawler, optionally with UndetectedAdapter."""
+    """Create and start a crawler, optionally with UndetectedAdapter.
+
+    Falls back to the default Playwright crawler if Patchright browsers are
+    missing or launch fails (common on first boot of a new image tag).
+    """
     if _USE_UNDETECTED:
-        logger.info("🛡️  Creating crawler with UndetectedAdapter (Patchright)")
-        strategy = AsyncPlaywrightCrawlerStrategy(
-            browser_config=cfg,
-            browser_adapter=UndetectedAdapter(),
-        )
-        crawler = AsyncWebCrawler(
-            crawler_strategy=strategy,
-            config=cfg,
-            thread_safe=False,
-        )
-    else:
-        crawler = AsyncWebCrawler(config=cfg, thread_safe=False)
+        try:
+            logger.info("🛡️  Creating crawler with UndetectedAdapter (Patchright)")
+            strategy = AsyncPlaywrightCrawlerStrategy(
+                browser_config=cfg,
+                browser_adapter=UndetectedAdapter(),
+            )
+            crawler = AsyncWebCrawler(
+                crawler_strategy=strategy,
+                config=cfg,
+                thread_safe=False,
+            )
+            await crawler.start()
+            return crawler
+        except Exception as exc:
+            logger.error(
+                "UndetectedAdapter failed (%s); falling back to default Playwright. "
+                "Install browsers in the image: `patchright install chromium`",
+                exc,
+            )
+    crawler = AsyncWebCrawler(config=cfg, thread_safe=False)
     await crawler.start()
     return crawler
 

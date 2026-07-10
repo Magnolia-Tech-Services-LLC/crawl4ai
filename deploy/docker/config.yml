@@ -91,7 +91,7 @@ crawler:
     kwargs:
       headless: true
       text_mode: false
-      enable_stealth: false  # mutually exclusive path with undetected adapter
+      enable_stealth: true   # used when UndetectedAdapter falls back to Playwright
     extra_args:
       # - "--single-process"
       # SECURITY: --no-sandbox disables the Chromium renderer sandbox (a renderer
