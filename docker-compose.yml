@@ -65,6 +65,8 @@ services:
       - /dev/shm:/dev/shm  # Chromium performance (from base-config)
       - ./deploy/docker/config.yml:/app/config.yml:ro  # Magnolia config (undetected + pool)
       - ./deploy/docker/crawler_pool.py:/app/crawler_pool.py:ro  # UndetectedAdapter wiring
+      # Patchright/Playwright browsers (populate once: patchright install chromium)
+      - /data/crawl4ai/ms-playwright:/home/appuser/.cache/ms-playwright
     
     # Expose port to host for network access (without public domain)
     ports:
